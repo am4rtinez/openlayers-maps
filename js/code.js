@@ -1,6 +1,34 @@
 $(document).ready(function(){
+  /*
+   * IDENTIFICADORES CIUDADES OPENWEATHERMAPS.
+   * 1- 2512989 - Palma - MALLORCA
+   * 2- 2514097 - Marratxi - MALLORCA
+   * 3- 2520493 - Calvia - MALLORCA
+   * 4- 2514216 - Manacor - MALLORCA
+   * 5- 3124967 - Ciutadella - MENORCA
+   * 6- 2514301 - Mao - MENORCA
+   * 7- 2516479 - Eivissa - EIVISSA
+   * 8- 2521741 - Andratx - MALLORCA
+   * 9- 2516452 - Inca - MALLORCA
+   * 10- 2510821 - Soller - MALLORCA
+   * 11- 2512432 - Pollença - MALLORCA
+   * 12- 2521534 - Arta - MALLORCA
+   * 13- 2511106 - Santanyi - MALLORCA
+   * 14- 2514984 - Llucmajor - MALLORCA
+   * 15- 2522259 - Alaior - MENORCA
+   * 16- 2513922 - Es Mercadal - MENORCA
+   * 17- 2511448 - Sant Antoni de Portmany - EIVISSA
+   * 18- 2511381 - Sant Francesc de Formentera - FORMENTERA
+   * 19- 2511162 - Santa Eulalia des Riu - EIVISSA
+  */
+  var cityIDs = "2512989,2514097,2520493,2514216,3124967,2514301,2516479,"
+    + "2521741,2516452,2510821,2512432,2521534,2511106,2514984,2522259,2513922,"
+    + "2511448,2511381,2511162";
+
   var scaleLineControl = new ol.control.ScaleLine();
   var unitsSelect = document.getElementById('units');
+
+  var map;
 	
   function initMap(){
 
@@ -25,7 +53,7 @@ $(document).ready(function(){
         ol.source.OSM.ATTRIBUTION
     ];
 
-    var map = new ol.Map({
+    map = new ol.Map({
       controls: ol.control.defaults({
           attributionOptions: {
             collapsible: false
@@ -211,7 +239,7 @@ $(document).ready(function(){
         //zoom: 9
       })
     });
-          
+         
     var layerSwitcher = new ol.control.LayerSwitcher({
       tipLabel: 'Leyenda'
     });
@@ -220,6 +248,73 @@ $(document).ready(function(){
 
     //Añadimos el Slider de control del Zoom.
     map.addControl(new ol.control.ZoomSlider());
+
+    /**
+
+    var styles = {
+      'geoMarker': new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 7,
+          snapToPixel: false,
+          fill: new ol.style.Fill({color: 'black'}),
+          stroke: new ol.style.Stroke({
+          color: 'white', width: 2
+          })
+        })
+      })
+    };
+
+    var vectorLayer = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [geoMarker]
+      }),
+      style: function(feature) {
+        // hide geoMarker if animation is active
+        return styles[feature.get('type')];
+      }
+    });
+
+    map.addLayer(vectorLayer);*/
+
+    $.getJSON('http://api.openweathermap.org/data/2.5/group?id='+cityIDs+'&units=metric&lang=es&appid=ad1b5e5251ef085417fb1bfd2f26cb45', function(data) {
+      ponerMarkers(data);
+    });
+    function ponerMarkers(json){
+
+      $.each(json.list, function(j, item){
+        //console.log(item);
+        var nom = item.name;
+        var lat = item.coord.lat;
+        var lon = item.coord.lon;
+        var temperatura = Math.floor(item.main.temp);
+
+        var geoMarker = new ol.Feature({
+          type: 'geoMarker',
+          geometry: new ol.geom.Point(ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857')),
+          name: nom
+        });
+        
+        var vectorLayer = new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [geoMarker]
+          }),
+          style: new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 7,
+              snapToPixel: false,
+              fill: new ol.style.Fill({color: 'black'}),
+              stroke: new ol.style.Stroke({
+              color: 'white', width: 2
+              })
+            })
+          })
+        });        
+        map.addLayer(vectorLayer);
+
+      });
+      
+    }
+
 
     function onChange() {
       scaleLineControl.setUnits(unitsSelect.value);
